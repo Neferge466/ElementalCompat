@@ -1,0 +1,16 @@
+{
+  "entries": [
+    {
+      "entity": "minecraft:villager_golem",
+      "elements": [
+        "elementalcompat:water"
+      ]
+    },
+    {
+      "entity": "minecraft:warden",
+      "elements": [
+        "elementalcompat:fire"
+      ]
+    }
+  ]
+}
