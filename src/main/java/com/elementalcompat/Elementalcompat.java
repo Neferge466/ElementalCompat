@@ -29,20 +29,15 @@ public class Elementalcompat {
     public static final Logger LOGGER = LogUtils.getLogger();
     public static final Map<ResourceLocation, ElementalType> ELEMENTAL_TYPES = new HashMap<>();
 
-    public Elementalcompat() {
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-        IEventBus forgeBus = MinecraftForge.EVENT_BUS;
 
-        // 注册核心系统
+    public Elementalcompat() {
+        IEventBus forgeBus = MinecraftForge.EVENT_BUS;
         forgeBus.addListener(this::onAddReloadListener);
         forgeBus.register(new ElementalDamageHandler());
-        forgeBus.register(new EntityBinder()); // 新增实体绑定器
-
-        // 初始化网络系统
+        forgeBus.register(new EntityBinder());
         NetworkHandler.register();
     }
 
-    // 实体元素属性绑定器（内部类）
     public static class EntityBinder {
         @SubscribeEvent
         public void onEntitySpawn(EntityJoinLevelEvent event) {
@@ -51,7 +46,6 @@ public class Elementalcompat {
             Entity entity = event.getEntity();
             ResourceLocation entityId = EntityType.getKey(entity.getType());
 
-            // 从加载器获取配置的元素列表
             List<ResourceLocation> elements = EntityElementLoader.ENTITY_ELEMENTS.get(entityId);
             if (elements != null && !elements.isEmpty()) {
                 applyElementsToEntity(entity, elements);
@@ -62,32 +56,28 @@ public class Elementalcompat {
             CompoundTag data = entity.getPersistentData();
             ListTag elementList = new ListTag();
 
-            // 过滤有效元素类型
             for (ResourceLocation elementId : elements) {
-                if (Elementalcompat.ELEMENTAL_TYPES.containsKey(elementId)) {
+                if (ELEMENTAL_TYPES.containsKey(elementId)) {
                     elementList.add(StringTag.valueOf(elementId.toString()));
                 } else {
-                    LOGGER.warn("尝试为 {} 绑定无效元素类型: {}",
+                    LOGGER.warn("Invalid element binding: {} -> {}",
                             EntityType.getKey(entity.getType()), elementId);
                 }
             }
 
-            // 仅当存在有效元素时写入数据
             if (!elementList.isEmpty()) {
                 data.put("ElementalTypes", elementList);
-                LOGGER.debug("为实体 {} 绑定元素属性: {}",
+                LOGGER.debug("Bound elements to {}: {}",
                         EntityType.getKey(entity.getType()), elements);
             }
         }
     }
 
-    // 数据包加载器注册
     private void onAddReloadListener(AddReloadListenerEvent event) {
+        // 保证加载顺序：先元素类型后实体映射
         event.addListener(ElementalTypeLoader.INSTANCE);
-        event.addListener(new EntityElementLoader()); // 新增实体元素加载器
+        event.addListener(new EntityElementLoader());
+        LOGGER.info("Registered data pack reload listeners");
     }
 }
-
-
-
 

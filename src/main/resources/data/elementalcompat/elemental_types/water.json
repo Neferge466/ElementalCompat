@@ -1,12 +1,13 @@
 {
+  "id": "elementalcompat:water",
   "color": "#FF4500",
   "strengths": {
     "elementalcompat:fire": 2.0
   },
   "weaknesses": {
-    "elementalcompat:water": 0.25
+    "elementalcompat:nature": 0.5
   },
   "immunities": [
-    "elementalcompat:nature"
+    "elementalcompat:water"
   ]
 }
