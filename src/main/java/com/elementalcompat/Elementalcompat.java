@@ -29,6 +29,9 @@ public class Elementalcompat {
     public static final Logger LOGGER = LogUtils.getLogger();
     public static final Map<ResourceLocation, ElementalType> ELEMENTAL_TYPES = new HashMap<>();
 
+    // 声明静态加载器实例
+    public static final ElementalTypeLoader TYPE_LOADER = ElementalTypeLoader.INSTANCE;
+    public static final EntityElementLoader ENTITY_LOADER = new EntityElementLoader();
 
     public Elementalcompat() {
         IEventBus forgeBus = MinecraftForge.EVENT_BUS;
@@ -36,6 +39,9 @@ public class Elementalcompat {
         forgeBus.register(new ElementalDamageHandler());
         forgeBus.register(new EntityBinder());
         NetworkHandler.register();
+
+        // 建立加载器依赖关系
+        ENTITY_LOADER.setDependency(TYPE_LOADER.getLoadedFuture());
     }
 
     public static class EntityBinder {
@@ -74,10 +80,9 @@ public class Elementalcompat {
     }
 
     private void onAddReloadListener(AddReloadListenerEvent event) {
-        // 保证加载顺序：先元素类型后实体映射
-        event.addListener(ElementalTypeLoader.INSTANCE);
-        event.addListener(new EntityElementLoader());
-        LOGGER.info("Registered data pack reload listeners");
+        // 确保正确的注册顺序和实例使用
+        event.addListener(TYPE_LOADER);
+        event.addListener(ENTITY_LOADER);
+        LOGGER.info("Registered data pack reload listeners in correct order");
     }
 }
-
