@@ -62,10 +62,17 @@ public class EntityElementLoader implements PreparableReloadListener {
         List<ResourceLocation> validElements = new ArrayList<>();
         elements.forEach(element -> {
             ResourceLocation elementId = new ResourceLocation(element.getAsString());
+
+            // 添加详细调试信息
             if (Elementalcompat.ELEMENTAL_TYPES.containsKey(elementId)) {
                 validElements.add(elementId);
+                Elementalcompat.LOGGER.debug("绑定 {} -> {}", entityId, elementId);
             } else {
-                Elementalcompat.LOGGER.warn("Skipping undefined element {} for {}", elementId, entityId);
+                Elementalcompat.LOGGER.warn("未定义元素 {}（实体 {}）",
+                        elementId, entityId);
+                // 记录缺失元素的堆栈跟踪
+                Elementalcompat.LOGGER.debug("当前已加载元素：{}",
+                        Elementalcompat.ELEMENTAL_TYPES.keySet());
             }
         });
 
@@ -73,6 +80,7 @@ public class EntityElementLoader implements PreparableReloadListener {
             map.put(entityId, validElements);
         }
     }
+
 
     private void syncToClients() {
         // 仅服务端执行同步
