@@ -6,14 +6,21 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.network.NetworkEvent;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
 public class ElementalSyncPacket {
     private final Map<ResourceLocation, ElementalType> types;
 
-    public ElementalSyncPacket(FriendlyByteBuf buf) {
-        types = buf.readMap(
+    // 构造方法改为从逻辑数据创建
+    public ElementalSyncPacket(Map<ResourceLocation, ElementalType> types) {
+        this.types = types;
+    }
+
+    // 静态解码方法
+    public static ElementalSyncPacket decode(FriendlyByteBuf buf) {
+        Map<ResourceLocation, ElementalType> types = buf.readMap(
                 FriendlyByteBuf::readResourceLocation,
                 b -> new ElementalType(
                         b.readResourceLocation(),
@@ -23,10 +30,12 @@ public class ElementalSyncPacket {
                         b.readList(FriendlyByteBuf::readResourceLocation)
                 )
         );
+        return new ElementalSyncPacket(types);
     }
 
-    public void encode(FriendlyByteBuf buf) {
-        buf.writeMap(types,
+    // 编码方法改为静态
+    public static void encode(ElementalSyncPacket packet, FriendlyByteBuf buf) {
+        buf.writeMap(packet.types,
                 FriendlyByteBuf::writeResourceLocation,
                 (b, t) -> {
                     b.writeResourceLocation(t.id());
