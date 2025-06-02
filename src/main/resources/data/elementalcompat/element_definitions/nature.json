@@ -1,0 +1,7 @@
+{
+  "interactions": {
+    "elementalcompat:fire": 0.5,
+    "elementalcompat:nature": 0.5,
+    "elementalcompat:water": 2.0
+  }
+}
