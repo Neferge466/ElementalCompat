@@ -41,7 +41,6 @@ public class ElementSyncPacket {
             ClientLevel level = Minecraft.getInstance().level;
             if (level != null) {
                 Entity entity = level.getEntity(entityId);
-                // 关键修复2：使用统一的能力访问方式
                 if (entity instanceof LivingEntity livingEntity) {
                     livingEntity.getCapability(Capabilities.ELEMENT_CAP).ifPresent(cap -> {
                         cap.setElements(elements);

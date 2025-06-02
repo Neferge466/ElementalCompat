@@ -19,8 +19,6 @@ public class ModEntities {
         event.addListener(new ElementAttributesLoader());
     }
 
-    // 核心修复1：使用全局能力键
-    // 核心修复2：添加前检查能力是否存在
     @SubscribeEvent
     public static void onAttachCapabilities(AttachCapabilitiesEvent<Entity> event) {
         if (event.getObject() instanceof LivingEntity) {

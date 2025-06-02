@@ -59,7 +59,6 @@ public class EntitySpawnHandler {
                         .collect(Collectors.joining(", "))
         );
 
-        // 新增：输出所有待检测元素
         Elementalcompat.LOGGER.debug("[元素列表] 所有注册元素: {}",
                 ElementManager.getAllElementIds().stream()
                         .map(ResourceLocation::toString)

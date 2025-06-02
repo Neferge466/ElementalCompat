@@ -26,22 +26,18 @@ public class Elementalcompat {
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         IEventBus forgeBus = MinecraftForge.EVENT_BUS;
 
-        // 核心修复1：AddReloadListenerEvent必须注册到Forge总线
         forgeBus.addListener(this::registerResourceListeners);
 
-        // 注册实体事件处理器到Forge总线
         forgeBus.register(EntitySpawnHandler.class);
         forgeBus.register(CombatEventHandler.class);
 
-        // 其他标准注册（Mod总线）
+        //Mod
         modBus.addListener(this::registerCapabilities);
         modBus.addListener(this::onCommonSetup);
 
-        // 注册配置
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.SPEC);
     }
 
-    // 资源重载监听器注册方法
     private void registerResourceListeners(AddReloadListenerEvent event) {
         event.addListener(ElementManager.createReloadListener());
         LOGGER.debug("[ElementalCompat] 元素数据重载监听器已注册");

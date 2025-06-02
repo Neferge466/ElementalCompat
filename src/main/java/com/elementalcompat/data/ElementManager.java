@@ -19,14 +19,12 @@ import java.util.stream.Collectors;
 
 @Mod.EventBusSubscriber(modid = Elementalcompat.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class ElementManager {
-    // 使用线程安全的Map以应对并行加载
     private static final Map<ResourceLocation, ElementDefinition> ELEMENT_DEFINITIONS = new ConcurrentHashMap<>();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    // 添加加载状态追踪
     private static volatile boolean isLoaded = false;
 
-    // 注册到Forge的Reload系统
+    // Forge-Reload
     @SubscribeEvent
     public static void onAddReloadListeners(AddReloadListenerEvent event) {
         event.addListener(createReloadListener());
@@ -79,7 +77,6 @@ public class ElementManager {
         }
     }
 
-    // 增强型解析方法
     private static ElementDefinition parseDefinition(JsonObject json) throws IllegalArgumentException {
         if (!json.has("interactions")) {
             throw new IllegalArgumentException("缺失必需的'interactions'字段");
@@ -107,12 +104,10 @@ public class ElementManager {
         return new ElementDefinition(multipliers);
     }
 
-    // 状态检查方法
     public static boolean isLoaded() {
         return isLoaded;
     }
 
-    // 安全访问方法
     public static Set<ResourceLocation> getAllElementIds() {
         if (!isLoaded) {
             Elementalcompat.LOGGER.warn("尝试访问未初始化的元素数据");

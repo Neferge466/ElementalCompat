@@ -18,9 +18,7 @@ public class ElementalProvider implements ICapabilitySerializable<CompoundTag> {
     private final IElementData instance = new ElementDataImpl();
     private final LazyOptional<IElementData> optional = LazyOptional.of(() -> instance);
 
-    // 核心修复：移除Entity参数（无需实体依赖）
     public ElementalProvider() {
-        // 初始化默认元素数据
         instance.setElements(new ArrayList<>());
     }
 
