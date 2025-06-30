@@ -1,0 +1,17 @@
+[
+  {
+    "item": "minecraft:diamond_sword",
+    "element": "elementalcompat:water",
+    "slot": "mainhand"
+  },
+  {
+    "item": "minecraft:golden_sword",
+    "element": "elementalcompat:fire",
+    "slot": "mainhand"
+  },
+  {
+    "item": "minecraft:diamond_helmet",
+    "element": "elementalcompat:water",
+    "slot": "head"
+  }
+]

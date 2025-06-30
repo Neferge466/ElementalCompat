@@ -13,7 +13,11 @@ import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -21,14 +25,14 @@ import java.util.stream.Collectors;
 public class ElementManager {
     private static final Map<ResourceLocation, ElementDefinition> ELEMENT_DEFINITIONS = new ConcurrentHashMap<>();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-
     private static volatile boolean isLoaded = false;
 
-    // Forge-Reload
     @SubscribeEvent
     public static void onAddReloadListeners(AddReloadListenerEvent event) {
         event.addListener(createReloadListener());
         Elementalcompat.LOGGER.info("[ElementManager] 已注册资源加载监听器");
+        event.addListener(new UnifiedElementLoader());
+        Elementalcompat.LOGGER.info("[UnifiedLoader] 统一元素绑定加载器已注册");
     }
 
     public static SimpleJsonResourceReloadListener createReloadListener() {
@@ -60,11 +64,13 @@ public class ElementManager {
                     ElementDefinition definition = parseDefinition(jsonObj);
                     ELEMENT_DEFINITIONS.put(id, definition);
 
-                    Elementalcompat.LOGGER.info("[元素加载] 成功加载 {} | 包含 {} 个交互规则",
-                            id, definition.getInteractionCount());
+                    Elementalcompat.LOGGER.info("[元素加载] 成功加载 {} | 交互规则: {} 条 | 最小伤害: {:.1f} | 最小承伤: {:.1f}",
+                            id,
+                            definition.getInteractionCount(),
+                            definition.getMinDamage(),
+                            definition.getMinIncoming());
                 } catch (Exception e) {
                     Elementalcompat.LOGGER.error("元素定义加载失败 {}: {}", id, e.getMessage());
-                    Elementalcompat.LOGGER.debug("错误堆栈:", e);
                 }
             });
 
@@ -79,29 +85,34 @@ public class ElementManager {
 
     private static ElementDefinition parseDefinition(JsonObject json) throws IllegalArgumentException {
         if (!json.has("interactions")) {
-            throw new IllegalArgumentException("缺失必需的'interactions'字段");
+            throw new IllegalArgumentException("元素定义缺少必需的'interactions'字段");
         }
 
         JsonObject interactions = json.getAsJsonObject("interactions");
-        Map<ResourceLocation, Float> multipliers = new HashMap<>(interactions.size());
-
+        Map<ResourceLocation, Float> multipliers = new HashMap<>();
         for (Map.Entry<String, JsonElement> entry : interactions.entrySet()) {
-            try {
-                ResourceLocation target = new ResourceLocation(entry.getKey());
-                float value = entry.getValue().getAsFloat();
+            ResourceLocation target = new ResourceLocation(entry.getKey());
+            float value = entry.getValue().getAsFloat();
+            if (value < 0) {
+                Elementalcompat.LOGGER.warn("修正无效的交互值 {} → {} 为0", target, value);
+                value = 0;
+            }
+            multipliers.put(target, value);
+        }
 
-                if (value < 0) {
-                    Elementalcompat.LOGGER.warn("无效的交互值 {} → {}，值不应小于0", target, value);
-                    value = 0;
-                }
-
-                multipliers.put(target, value);
-            } catch (Exception e) {
-                throw new IllegalArgumentException("解析交互条目失败: " + entry.getKey(), e);
+        float minDamage = 1.0f;
+        float minIncoming = 0.5f;
+        if (json.has("thresholds")) {
+            JsonObject thresholds = json.getAsJsonObject("thresholds");
+            if (thresholds.has("min_damage")) {
+                minDamage = thresholds.get("min_damage").getAsFloat();
+            }
+            if (thresholds.has("min_incoming")) {
+                minIncoming = thresholds.get("min_incoming").getAsFloat();
             }
         }
 
-        return new ElementDefinition(multipliers);
+        return new ElementDefinition(multipliers, minDamage, minIncoming);
     }
 
     public static boolean isLoaded() {
@@ -123,17 +134,34 @@ public class ElementManager {
 
     public static float getMultiplier(ResourceLocation attacker, ResourceLocation defender) {
         if (!isLoaded) return 1.0f;
-
         return getElementDefinition(attacker)
                 .map(def -> def.getMultiplier(defender))
                 .orElse(1.0f);
     }
 
+    public static float getMinDamage(ResourceLocation element) {
+        return getElementDefinition(element)
+                .map(ElementDefinition::getMinDamage)
+                .orElse(1.0f);
+    }
+
+    public static float getMinIncoming(ResourceLocation element) {
+        return getElementDefinition(element)
+                .map(ElementDefinition::getMinIncoming)
+                .orElse(0.5f);
+    }
+
     public static class ElementDefinition {
         private final Map<ResourceLocation, Float> multipliers;
+        private final float minDamage;
+        private final float minIncoming;
 
-        public ElementDefinition(Map<ResourceLocation, Float> multipliers) {
-            this.multipliers = Collections.unmodifiableMap(multipliers);
+        public ElementDefinition(Map<ResourceLocation, Float> multipliers,
+                                 float minDamage,
+                                 float minIncoming) {
+            this.multipliers = Collections.unmodifiableMap(new HashMap<>(multipliers));
+            this.minDamage = minDamage;
+            this.minIncoming = minIncoming;
         }
 
         public float getMultiplier(ResourceLocation target) {
@@ -142,6 +170,14 @@ public class ElementManager {
 
         public int getInteractionCount() {
             return multipliers.size();
+        }
+
+        public float getMinDamage() {
+            return minDamage;
+        }
+
+        public float getMinIncoming() {
+            return minIncoming;
         }
     }
 }

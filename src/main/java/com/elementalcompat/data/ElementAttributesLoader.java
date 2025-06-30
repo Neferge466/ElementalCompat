@@ -17,7 +17,6 @@ public class ElementAttributesLoader extends SimpleJsonResourceReloadListener {
     public static final Map<EntityType<?>, List<ResourceLocation>> ELEMENT_MAP = new HashMap<>();
 
     public ElementAttributesLoader() {
-        // 对应 resources/data/elementalcompat/element_attributes 目录
         super(GSON, "elementalcompat/element_attributes");
     }
 
